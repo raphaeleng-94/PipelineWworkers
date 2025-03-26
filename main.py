@@ -7,6 +7,8 @@ import psycopg2
 from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import inspect
+from sqlalchemy import text
 from dotenv import load_dotenv
 from logging import basicConfig, getLogger
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -48,6 +50,13 @@ SessionLocal = sessionmaker(bind=engine)
 def criar_tabela():
     Base.metadata.create_all(engine)
     logger.info("Tabela criada|verificada com sucesso")
+    """ inspector = inspect(engine)
+    if '"LIVROS_ESTOQUE"' in inspector.get_table_names():
+        with engine.connect() as conn:
+            conn.execute(text('DROP TABLE IF EXISTS "LIVROS_ESTOQUE" CASCADE'))
+            conn.commit()
+            """
+    
 
 base_url = "https://books.toscrape.com/catalogue/"
 start_url = "https://books.toscrape.com/catalogue/page-1.html"
@@ -133,9 +142,9 @@ def salvar_dados_postgres(dados):
             estoque = dado['estoque']
             timestamp = dado['timestamp']
             query = """
-                INSERT INTO LIVROS_ESTOQUE (titulo, classificacao, categoria, preco, estoque, timestamp)
+                INSERT INTO "LIVROS_ESTOQUE" (titulo, classificacao, categoria, preco, estoque, timestamp)
                 VALUES (%s, %s, %s, %s, %s, %s)
-                ON CONFLICT (titulo, categoria) DO NOTHING;
+                ON CONFLICT (titulo, preco) DO NOTHING;
             """
             cur.execute(query, (titulo, classificacao, categoria, preco, estoque, timestamp))
         conn.commit()
@@ -179,6 +188,7 @@ def main():
         for future in as_completed(futures):
             try:
                 future.result()
+            
             except Exception as e:
                 logger.error(f"Erro em um dos workers: {e}")
 

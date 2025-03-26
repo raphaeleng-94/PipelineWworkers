@@ -17,5 +17,5 @@ class Livro(Base):
     timestamp = Column(DateTime, default=datetime.now)
 
     __table_args__ = (
-        UniqueConstraint('titulo', 'categoria', name='uix_titulo_categoria'),
+        UniqueConstraint('titulo', 'preco', name='uix_titulo_preco'),
     )
